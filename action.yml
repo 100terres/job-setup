@@ -1,0 +1,10 @@
+# Copyright (c) Gabriel Santerre
+# SPDX-License-Identifier: MIT
+
+name: Setup
+description: The only action you'll need before running the main step of a CI job.
+runs:
+  using: composite
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3.6.0
