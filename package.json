@@ -20,7 +20,7 @@
     "pnpm": ">=8 <9"
   },
   "scripts": {
-    "format:check": "prettier action.yml --check"
+    "format:check": "prettier --check"
   },
   "devDependencies": {
     "prettier": "3.0.2"
