@@ -1,0 +1,21 @@
+{
+  "name": "action-setup",
+  "version": "0.1.0",
+  "description": "The only action you'll need before running the main step of a CI job.",
+  "author": "Gabriel Santerre",
+  "license": "MIT",
+  "homepage": "https://github.com/100terres/action-setup",
+  "keywords": [
+    "action",
+    "ci",
+    "setup"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/100terres/action-setup.git"
+  },
+  "engines": {
+    "node": ">=18 <19",
+    "pnpm": ">=8 <9"
+  }
+}
