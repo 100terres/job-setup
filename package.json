@@ -17,5 +17,11 @@
   "engines": {
     "node": ">=18 <19",
     "pnpm": ">=8 <9"
+  },
+  "scripts": {
+    "format:check": "prettier action.yml --check"
+  },
+  "devDependencies": {
+    "prettier": "3.0.2"
   }
 }
