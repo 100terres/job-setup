@@ -1,0 +1,31 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'releases/*'
+
+jobs:
+  check-format:
+    name: Check Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup
+        uses: 100terres/action-setup@ccf2f75af23eae8fbd31f0e42c3e7e8dc2004260
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2.4.0
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v3.8.1
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install NodeJS Dependencies
+        run: pnpm install
+
+      - name: Check Format
+        run: pnpm run format:check
