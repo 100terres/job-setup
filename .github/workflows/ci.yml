@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup
-        uses: 100terres/action-setup@ccf2f75af23eae8fbd31f0e42c3e7e8dc2004260
+        uses: 100terres/job-setup@ccf2f75af23eae8fbd31f0e42c3e7e8dc2004260
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2.4.0
