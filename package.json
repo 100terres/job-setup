@@ -5,6 +5,7 @@
   "author": "Gabriel Santerre",
   "license": "MIT",
   "homepage": "https://github.com/100terres/action-setup",
+  "packageManager": "pnpm@8.6.12",
   "keywords": [
     "action",
     "ci",
