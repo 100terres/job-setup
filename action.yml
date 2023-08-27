@@ -10,6 +10,10 @@ inputs:
     description: Wether or not to output the changed files list.
     default: "false"
 
+  changed-files-filters:
+    required: false
+    description: Using glob patterns to filter changed files.
+
 outputs:
   changed-files:
     description: Changed Files
@@ -41,5 +45,94 @@ runs:
       run: |
         PARENT_COMMIT_COUNT=$(( ${{ steps.metadata-checkout.outputs.fetch-depth }} - 1 ))
         BASE_COMMIT_SHA=$(git rev-list -n 1 ${{ steps.metadata-checkout.outputs.current-commit-sha }}~$PARENT_COMMIT_COUNT)
-        CHANGED_FILES=$(git diff --name-status $BASE_COMMIT_SHA..${{ steps.metadata-checkout.outputs.current-commit-sha }} | grep -E '^[ACMR]' | sed -e 's/^[ACMR]\s*//' -e 's/\s*$//' -e 's/ /\\ /g' | tr '\n' ' ')
-        echo "changed-files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
+        CHANGED_FILES=$(git diff --name-status $BASE_COMMIT_SHA..${{ steps.metadata-checkout.outputs.current-commit-sha }} | grep -E '^[ACMR]' | sed -e 's/^[ACMR]\s*//' -e 's/\s*$//' -e 's/ /\\ /g')
+
+        # Globstar pattern for filtering file paths
+        CHANGED_FILES_FILTERS="${{ inputs.changed-files-filters }}"
+
+        # Return all changed files if no filter provided
+        if [[ -z "$CHANGED_FILES_FILTERS" ]]; then
+          CHANGED_FILES=$(echo $CHANGED_FILES | tr '\n' ' ')
+          echo "changed-files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # Enable glob
+        shopt -s globstar
+        shopt -s extglob
+        shopt -s dotglob
+
+        # Convert CHANGED_FILES_FILTERS to an array
+        CHANGED_FILES_FILTER_ARRAY=()
+        while IFS= read -r line; do
+          TRIMMED_LINE="${line#"${line%%[![:space:]]*}"}"
+          TRIMMED_LINE="${TRIMMED_LINE%"${TRIMMED_LINE##*[![:space:]]}"}"
+
+          if [[ -n "$TRIMMED_LINE" ]]; then
+            CHANGED_FILES_FILTER_ARRAY+=("$TRIMMED_LINE")
+          fi
+        done <<< "$CHANGED_FILES_FILTERS"
+
+        echo "::group::CHANGED_FILES_FILTER_ARRAY"
+        for  CHANGED_FILES_FILTERS in "${CHANGED_FILES_FILTER_ARRAY[@]}"; do
+          echo "$CHANGED_FILES_FILTERS"
+        done
+        echo "::endgroup::"
+
+        # Convert CHANGED_FILES to an array
+        CHANGED_FILE_ARRAY=()
+          while IFS= read -r line; do
+          TRIMMED_LINE="${line#"${line%%[![:space:]]*}"}"
+          TRIMMED_LINE="${TRIMMED_LINE%"${TRIMMED_LINE##*[![:space:]]}"}"
+
+          if [[ -n "$TRIMMED_LINE" ]]; then
+            CHANGED_FILE_ARRAY+=("$TRIMMED_LINE")
+          fi
+        done <<< "$CHANGED_FILES"
+
+        echo "::group::CHANGED_FILE_ARRAY"
+        for CHANGED_FILE in "${CHANGED_FILE_ARRAY[@]}"; do
+          echo "$CHANGED_FILE"
+        done
+        echo "::endgroup::"
+
+        # Use filters to gather a list of files on the system
+        MATCHED_FILE_ARRAY=()
+        for CHANGED_FILE_FILTER in "${CHANGED_FILES_FILTER_ARRAY[@]}"; do
+          MATCHING_OUTPUT=$(ls --almost-all --escape -1 --color=never $CHANGED_FILE_FILTER)
+
+          # Read each line of the output into the array
+          while IFS= read -r line; do
+            MATCHED_FILE_ARRAY+=("$line")
+          done <<< "$MATCHING_OUTPUT"
+        done
+
+        echo "::group::MATCHED_FILE_ARRAY"
+        for MATCHED_FILE in "${MATCHED_FILE_ARRAY[@]}"; do
+          echo "$MATCHED_FILE"
+        done
+        echo "::endgroup::"
+
+        # Create an associative array to track unique elements
+        declare -A FILTERED_CHANGED_FILE_ASSOCIATIVE_ARRAY
+
+        # Intersect matched files with changed files
+        for MATCHED_FILE in "${MATCHED_FILE_ARRAY[@]}"; do
+          for CHANGED_FILE in "${CHANGED_FILE_ARRAY[@]}"; do
+            if [[ "$MATCHED_FILE" == "$CHANGED_FILE" ]]; then
+              FILTERED_CHANGED_FILE_ASSOCIATIVE_ARRAY["$MATCHED_FILE"]=1
+            fi
+          done
+        done
+
+        # Convert associative array to array
+        FILTERED_CHANGED_FILE_ARRAY=("${!FILTERED_CHANGED_FILE_ASSOCIATIVE_ARRAY[@]}")
+
+        echo "::group::FILTERED_CHANGED_FILE_ARRAY"
+        for CHANGED_FILE in "${FILTERED_CHANGED_FILE_ARRAY[@]}"; do
+          echo "$CHANGED_FILE"
+        done
+        echo "::endgroup::"
+
+        FILTERED_CHANGED_FILES="${FILTERED_CHANGED_FILE_ARRAY[@]}"
+        echo "changed-files=$FILTERED_CHANGED_FILES" >> "$GITHUB_OUTPUT"
