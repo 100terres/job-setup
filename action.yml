@@ -3,8 +3,43 @@
 
 name: Setup
 description: The only action you'll need before running the main step of a CI job.
+
+inputs:
+  output-changed-files:
+    required: false
+    description: Wether or not to output the changed files list.
+    default: "false"
+
+outputs:
+  changed-files:
+    description: Changed Files
+    value: ${{ steps.metadata-changed-files.outputs.changed-files }}
+
 runs:
   using: composite
   steps:
+    - name: Checkout Metadata
+      id: metadata-checkout
+      if: ${{ inputs.output-changed-files == 'true' }}
+      shell: bash
+      run: |
+        FETCH_DEPTH=$(( ${{ github.event.pull_request.commits || 1 }} + 1 ))
+        echo "fetch-depth=$FETCH_DEPTH" >> "$GITHUB_OUTPUT"
+        CURRENT_COMMIT_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+        echo "current-commit-sha=$CURRENT_COMMIT_SHA" >> "$GITHUB_OUTPUT"
+
     - name: Checkout Repository
       uses: actions/checkout@v3.6.0
+      with:
+        fetch-depth: ${{ steps.metadata-checkout.outputs.fetch-depth || 1 }}
+        ref: ${{ steps.metadata-checkout.outputs.current-commit-sha }}
+
+    - name: Output Changed Files
+      id: metadata-changed-files
+      if: ${{ inputs.output-changed-files == 'true' }}
+      shell: bash
+      run: |
+        PARENT_COMMIT_COUNT=$(( ${{ steps.metadata-checkout.outputs.fetch-depth }} - 1 ))
+        BASE_COMMIT_SHA=$(git rev-list -n 1 ${{ steps.metadata-checkout.outputs.current-commit-sha }}~$PARENT_COMMIT_COUNT)
+        CHANGED_FILES=$(git diff --name-status $BASE_COMMIT_SHA..${{ steps.metadata-checkout.outputs.current-commit-sha }} | grep -E '^[ACMR]' | sed -e 's/^[ACMR]\s*//' -e 's/\s*$//' -e 's/ /\\ /g' | tr '\n' ' ')
+        echo "changed-files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
