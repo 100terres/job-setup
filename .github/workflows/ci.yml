@@ -13,7 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup
-        uses: 100terres/job-setup@ccf2f75af23eae8fbd31f0e42c3e7e8dc2004260
+        id: metadata
+        uses: 100terres/job-setup@1a138021f1ca978c21f49dbabc873c66e21a3c30
+        with:
+          output-changed-files: "true"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2.4.0
@@ -28,5 +31,4 @@ jobs:
         run: pnpm install
 
       - name: Check Format
-        # TODO: run only on changed files
-        run: pnpm run format:check -- .
+        run: pnpm run format:check -- ${{ steps.metadata.outputs.changed-files }}
