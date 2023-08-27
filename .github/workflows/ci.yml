@@ -14,9 +14,13 @@ jobs:
     steps:
       - name: Setup
         id: metadata
-        uses: 100terres/job-setup@1a138021f1ca978c21f49dbabc873c66e21a3c30
+        uses: 100terres/job-setup@0d2a4b85eeac0d959c2769f0c100db75c9cf94e2
         with:
           output-changed-files: "true"
+          changed-files-filters: |
+            **/*.json
+            **/*.md
+            **/*.yml
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2.4.0
