@@ -33,7 +33,7 @@ runs:
         echo "current-commit-sha=$CURRENT_COMMIT_SHA" >> "$GITHUB_OUTPUT"
 
     - name: Checkout Repository
-      uses: actions/checkout@v3.6.0
+      uses: actions/checkout@v4.1.0
       with:
         fetch-depth: ${{ steps.metadata-checkout.outputs.fetch-depth || 1 }}
         ref: ${{ steps.metadata-checkout.outputs.current-commit-sha }}
